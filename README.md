@@ -1,100 +1,153 @@
 # Restaurant Ordering & Billing System
 
-Simple Java console application implementing Abstract Factory, Simple Factory, Decorator, Strategy, Observer and Template Method patterns.
+A Java console application for placing restaurant orders, applying discounts, and processing payments. Built with four core design patterns: **Abstract Factory**, **Decorator**, **Strategy**, and **Observer**.
 
-## Prerequisites
-- JDK 8 or newer installed
-- Command-line (Windows PowerShell / CMD)
-- Project sources under: `C:\Java Projects\Resturant_Ordering_Biiling_System\src`
+---
 
-## Build and run
-1. Open a command prompt.
-2. From project root run:
-   - Compile:
-     javac -d out -sourcepath "C:\Java Projects\Resturant_Ordering_Biiling_System\src" "C:\Java Projects\Resturant_Ordering_Biiling_System\src\Main.java"
-   - Run:
-     java -cp out Main
-3. Alternatively, import the project into an IDE (IntelliJ/Eclipse) as a Java project and run `Main`.
+## How to Run
 
-Note: If packages are used inside `src`, make sure directory structure matches package declarations.
+### Prerequisites
 
-## Interactive flow (what the program asks)
-- Select Menu Type: Vegetarian / NonVeg / Kids
-- Select Category: Pizza / Burger / Drink (available options may differ per menu type)
-- Choose concrete item(s)
-- Optionally add add-ons (decorators) per item type
-- Repeat to add more items
-- Confirm order to apply discounts and notify observers
-- Choose payment method (Cash / Card / Wallet)
-- Generate and view receipt
+- JDK 8 or newer
 
-## Example test cases and expected results
+### Option 1 — Command Line
 
-Test case 1 — Single Pizza with add-on
-- Steps:
-  1. Menu type: Vegetarian
-  2. Category: Pizza
-  3. Item: ItalianPizza — base price $8.00
-  4. Add-on: ExtraCheese (+$1.50)
-  5. Finish order
-  6. Payment: Cash
-- Assumptions (example discount rules used by the app):
-  - PizzaDiscount = 10%
-- Calculation:
-  - Subtotal = 8.00 + 1.50 = 9.50
-  - Discount = 9.50 * 10% = 0.95
-  - Final = 9.50 - 0.95 = 8.55
-- Expected:
-  - Payment success -> Receipt shows subtotal 9.50, discount 0.95, final price 8.55
+```bash
+# From the project root directory
+javac -d out -sourcepath src src/Main.java
+java -cp out Main
+```
 
-Test case 2 — Multiple items with mixed categories
-- Steps:
-  1. Menu type: NonVeg
-  2. Pizza: EasternPizza ($9.00) with ExtraToppings (+$2.00)
-  3. Burger: ClassicBurger ($6.00) with BaconTopping (+$1.75)
-  4. Drink: Cola ($2.00) with Ice (+$0.25)
-  5. Finish order
-  6. Payment: Card
-- Assumptions:
-  - PizzaDiscount = 10%
-  - BurgerDiscount = 5%
-  - DrinkDiscount = 2%
-- Calculation:
-  - Pizza subtotal = 9.00 + 2.00 = 11.00, pizza discount = 1.10 -> net = 9.90
-  - Burger subtotal = 6.00 + 1.75 = 7.75, burger discount = 0.3875 -> net ≈ 7.36
-  - Drink subtotal = 2.00 + 0.25 = 2.25, drink discount = 0.045 -> net ≈ 2.21
-  - Order subtotal = 11.00 + 7.75 + 2.25 = 21.00
-  - Total discount ≈ 1.10 + 0.3875 + 0.045 = 1.5325
-  - Final price ≈ 21.00 - 1.5325 = 19.4675 → round to 19.47
-- Expected:
-  - Card payment success -> Receipt shows breakdown, discounts and final ~19.47
+### Option 2 — IDE
 
-Test case 3 — Vegetarian menu cannot produce non-veg burger
-- Steps:
-  1. Menu type: Vegetarian
-  2. Try to select a non-veg burger (should not appear or should be blocked)
-- Expected:
-  - App prevents selection of non-veg burgers when Vegetarian menu is selected.
+Open the project in IntelliJ IDEA or Eclipse and run `Main.java`.
 
-Test case 4 — Seasonal discount override
-- Steps:
-  1. Add any order (e.g., Pizza $10)
-  2. If SeasonalDiscount strategy is active, assume SeasonalDiscount = 15%
-- Calculation:
-  - Subtotal 10.00, discount 1.50, final 8.50
-- Expected:
-  - Receipt reflects SeasonalDiscount applied (higher discount).
+---
 
-## Where to adjust discount/payment amounts (if needed)
-- Discount percentages are defined in discount strategy classes (e.g., `PizzaDiscount`, `BurgerDiscount`, `DrinkDiscount`, `SeasonalDiscount`). Modify the calculation logic there to change rules.
-- Payment handling is in `PaymentController` and concrete `PaymentStrategy` classes. Modify to simulate success/failure behaviour.
+## Features
 
-## Troubleshooting
-- Compilation errors: ensure `src` tree mirrors package declarations and run javac with correct `-sourcepath` and `-d` output directory.
-- Runtime errors: check stack trace, confirm all classes compiled into `out` directory.
+- **Menu types** — Vegetarian, Non-Veg, and Kids menus
+- **Food categories** — Pizzas (Italian, Eastern), Burgers (Classic, Cheese), Drinks (Cola, Juice)
+- **Customizable add-ons** — Extra cheese, extra sauce, extra toppings, bacon, ice, lemon, sugar
+- **Automatic discounts** — 10% on pizzas, 8% on burgers, 5% on drinks (or no discount)
+- **Multiple payment methods** — Cash, Card, or Wallet
+- **Live notifications** — Kitchen and Waiter are notified when an order is placed
+- **Receipt generation** — Displays item breakdown, discount, and final price
 
-## Notes
-- The console UI is interactive — follow on-screen prompts.
-- Receipts and logs are printed to console. Observers (Kitchen/Waiter) print notifications when orders are placed.
+---
 
+## UML Class Diagram
 
+![UML Class Diagram](Restaurant.drawio.svg)
+
+---
+
+## Class Relationships
+
+The system is organized into layered packages where each layer depends only on the layers below it:
+
+- **`Main`** creates a **`UI`** instance and starts the console loop.
+- **`UI`** owns a **`RestaurantService`**, which acts as a façade and delegates all work to **`OrderController`**.
+- **`OrderController`** is the central orchestrator. It holds references to:
+  - A **`MenuFactory`** (interface) — set at runtime to one of `VegetarianMenuFactory`, `NonVegMenuFactory`, or `KidsMenuFactory`. Each concrete factory creates the appropriate **`PizzaFactory`**, **`BurgerFactory`**, and **`DrinkFactory`** (simple factories that instantiate concrete `MenuItem` subclasses).
+  - A **`PaymentController`** — which holds a **`PaymentStrategy`** (interface) and delegates payment to `CashPayment`, `CardPayment`, or `WalletPayment`.
+  - A **`DiscountManager`** — which holds a **`DiscountStrategy`** (interface) and delegates discount calculation to `PizzaDiscount`, `BurgerDiscount`, `DrinkDiscount`, `NoDiscount`, or `SeasonalDiscount`.
+  - An **`OrderPublisher`** (subject) — which maintains a list of **`OrderObserver`** subscribers (`KitchenObserver`, `WaiterObserver`) and notifies them when an order is placed.
+  - An **`Order`** — which aggregates a list of **`MenuItem`** objects.
+- **`MenuItem`** is the abstract base class. Concrete items (`ItalianPizza`, `EasternPizza`, `ClassicBurger`, `CheeseBurger`, `Cola`, `Juice`) extend it directly.
+- **Decorators** (`PizzaDecorator`, `BurgerDecorator`, `DrinkDecorator`) also extend `MenuItem` and wrap another `MenuItem` instance, forming a recursive composition. Concrete decorators like `ExtraCheesePizza` or `BaconTopping` override `getPrice()` to add their cost on top of the wrapped item.
+
+In short: `UI` → `RestaurantService` → `OrderController` → factories, strategies, observers, and the `Order`/`MenuItem` model.
+
+---
+
+## Class Design & Design Patterns
+
+### 1. Abstract Factory Pattern
+
+Creates families of related menu items depending on the selected menu type.
+
+| Class | Role |
+|---|---|
+| `MenuFactory` | Abstract factory interface |
+| `VegetarianMenuFactory` | Produces pizza & drink factories (no burgers) |
+| `NonVegMenuFactory` | Produces pizza, burger & drink factories |
+| `KidsMenuFactory` | Produces pizza, burger & drink factories |
+| `PizzaFactory` | Simple factory — creates `ItalianPizza` or `EasternPizza` |
+| `BurgerFactory` | Simple factory — creates `ClassicBurger` or `CheeseBurger` |
+| `DrinkFactory` | Simple factory — creates `Cola` or `Juice` |
+
+### 2. Decorator Pattern
+
+Wraps a `MenuItem` to dynamically add extras without modifying the original object.
+
+| Base Decorator | Concrete Decorators | Extra Cost |
+|---|---|---|
+| `PizzaDecorator` | `ExtraCheesePizza`, `ExtraSaucePizza`, `ExtraToppingsPizza` | +$1.0, +$0.5, +$1.5 |
+| `BurgerDecorator` | `ExtraCheeseBurger`, `ExtraSauceBurger`, `BaconTopping` | +$0.8, +$0.5, +$1.2 |
+| `DrinkDecorator` | `Ice`, `Lemon`, `Sugar` | +$0.2, +$0.3, +$0.1 |
+
+All decorators extend `MenuItem`, wrapping an inner item and overriding `getName()` / `getPrice()`.
+
+### 3. Strategy Pattern
+
+Used in two places — **payments** and **discounts** — to swap algorithms at runtime.
+
+**Payment strategies:**
+
+| Interface | Implementations |
+|---|---|
+| `PaymentStrategy` | `CashPayment`, `CardPayment`, `WalletPayment` |
+
+`PaymentController` holds a `PaymentStrategy` and delegates the `pay()` call to it.
+
+**Discount strategies:**
+
+| Interface | Implementations | Discount |
+|---|---|---|
+| `DiscountStrategy` | `PizzaDiscount` | 10% |
+| | `BurgerDiscount` | 8% |
+| | `DrinkDiscount` | 5% |
+| | `NoDiscount` | 0% |
+| | `SeasonalDiscount` | 15% |
+
+`DiscountManager` holds a `DiscountStrategy` and applies it to an order.
+
+### 4. Observer Pattern
+
+Notifies interested parties whenever a new order is created.
+
+| Class | Role |
+|---|---|
+| `OrderObserver` | Observer interface with `update(Order)` |
+| `OrderPublisher` | Subject — maintains a list of observers and calls `notify()` |
+| `KitchenObserver` | Prints a kitchen notification on new orders |
+| `WaiterObserver` | Prints a waiter notification on new orders |
+
+### Other Classes
+
+| Class | Purpose |
+|---|---|
+| `MenuItem` | Abstract base class for all food/drink items (`name`, `price`) |
+| `Order` | Holds a list of `MenuItem`s, tracks total, discount, and final price |
+| `OrderController` | Orchestrates the full order flow (menu selection → add-ons → discount → notify) |
+| `RestaurantService` | Service layer that delegates to `OrderController` |
+| `UI` | Console interface — main menu loop (Create Order / Pay / Receipt / Exit) |
+| `Main` | Entry point — launches the `UI` |
+
+---
+
+## Project Structure
+
+```
+src/
+├── Main.java                  # Entry point
+├── ui/UI.java                 # Console menu
+├── service/RestaurantService.java
+├── controller/OrderController.java
+├── model/                     # MenuItem, Order, concrete items
+├── factory/                   # Abstract Factory + Simple Factories
+├── decorator/                 # Decorator base classes + add-ons
+├── observer/                  # Observer interface + publisher + observers
+└── strategy/                  # Payment & Discount strategies
+```
